@@ -45,36 +45,29 @@ class MyEnv(
     """
 
     def _step_payload(self, action: MyAction) -> Dict:
-        """
-        Convert MyAction to JSON payload for step message.
-
-        Args:
-            action: MyAction instance
-
-        Returns:
-            Dictionary representation suitable for JSON encoding
-        """
         return {
-            "message": action.message,
+            "task_id": action.task_id,
+            "operation": getattr(action.operation, "value", action.operation),
+            "row_index": action.row_index,
+            "field_name": action.field_name,
+            "value": action.value,
         }
 
     def _parse_result(self, payload: Dict) -> StepResult[MyObservation]:
-        """
-        Parse server response into StepResult[MyObservation].
-
-        Args:
-            payload: JSON response data from server
-
-        Returns:
-            StepResult with MyObservation
-        """
         obs_data = payload.get("observation", {})
+        metadata = obs_data.get("metadata") or payload.get("metadata") or {}
         observation = MyObservation(
-            echoed_message=obs_data.get("echoed_message", ""),
-            message_length=obs_data.get("message_length", 0),
+            task_id=obs_data.get("task_id", ""),
+            step_count=obs_data.get("step_count", 0),
+            task_description=obs_data.get("task_description", ""),
+            task_goal=obs_data.get("task_goal", ""),
+            remaining_issues=obs_data.get("remaining_issues", 0),
+            progress_fraction=obs_data.get("progress_fraction", 0.0),
+            preview_rows=obs_data.get("preview_rows", []),
+            task_score=obs_data.get("task_score", 0.0),
             done=payload.get("done", False),
             reward=payload.get("reward"),
-            metadata=obs_data.get("metadata", {}),
+            metadata=metadata,
         )
 
         return StepResult(
