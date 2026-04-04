@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 """
-FastAPI application for the My Env Environment.
+FastAPI application for the CSV training Environment.
 
 This module creates an HTTP server that exposes the MyEnvironment
 over HTTP and WebSocket endpoints, compatible with EnvClient.
@@ -49,7 +49,7 @@ app = create_app(
     MyAction,
     MyObservation,
     env_name="my_env",
-    max_concurrent_envs=1,  # increase this number to allow more concurrent WebSocket sessions
+    max_concurrent_envs=4,  # increase this number to allow more concurrent WebSocket sessions
 )
 
 

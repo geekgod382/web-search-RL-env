@@ -4,4 +4,12 @@ type: space
 runtime: fastapi
 app: server.app:app
 port: 8000
+description: "OpenEnv RL environment for CSV data collection, curation, and refinement with graded easy/medium/hard tasks"
+tags:
+  - rl
+  - csv
+  - data-collection
+  - data-curation
+  - data-refinement
+  - openenv
 
