@@ -129,6 +129,12 @@ Then push the image to Hugging Face or another container registry.
 
 - Added support for the `IMAGE_NAME` environment variable in `inference.py`.
 - This update enables the inference workflow to accept an optional image name from the environment, while retaining the existing `API_BASE_URL`, `MODEL_NAME`, and `HF_TOKEN` configuration.
+- Implemented all required API endpoints in `server/app.py`:
+  - `POST /reset`: Reset the environment for a new episode
+  - `POST /step`: Execute an action in the environment
+  - `GET /state`: Get current environment state
+  - `GET /schema`: Get action/observation schemas
+  - `WS /ws`: WebSocket endpoint for persistent sessions
 
 ## Local Development
 

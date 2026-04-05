@@ -28,29 +28,120 @@ Usage:
     python -m server.app
 """
 
-try:
-    from openenv.core.env_server.http_server import create_app
-except Exception as e:  # pragma: no cover
-    raise ImportError(
-        "openenv is required for the web interface. Install dependencies with '\n    uv sync\n'"
-    ) from e
+from typing import Dict, Optional
+import json
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi.responses import JSONResponse
+import uvicorn
 
 try:
-    from ..models import MyAction, MyObservation
+    from models import MyAction, MyObservation
     from .csv_env import MyEnvironment
-except ModuleNotFoundError:
+except ImportError:
     from models import MyAction, MyObservation
     from server.csv_env import MyEnvironment
 
 
-# Create the app with web interface and README integration
-app = create_app(
-    MyEnvironment,
-    MyAction,
-    MyObservation,
-    env_name="my_env",
-    max_concurrent_envs=4,  # increase this number to allow more concurrent WebSocket sessions
-)
+app = FastAPI(title="CSV RL Environment API", description="OpenEnv-compatible CSV data curation environment")
+
+# Store environments by session_id for concurrent sessions
+environments: Dict[str, MyEnvironment] = {}
+
+
+def get_or_create_env(session_id: str) -> MyEnvironment:
+    """Get existing environment or create new one for the session."""
+    if session_id not in environments:
+        environments[session_id] = MyEnvironment(seed=42)
+    return environments[session_id]
+
+
+@app.post("/reset")
+async def reset_environment(task_id: Optional[str] = None, session_id: str = "default") -> MyObservation:
+    """Reset the environment for a new episode."""
+    env = get_or_create_env(session_id)
+    try:
+        obs = env.reset(task_id=task_id)
+        return obs
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/step")
+async def step_environment(action: MyAction, session_id: str = "default") -> MyObservation:
+    """Execute an action in the environment."""
+    env = get_or_create_env(session_id)
+    try:
+        obs = env.step(action)
+        return obs
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/state")
+async def get_environment_state(session_id: str = "default") -> Dict:
+    """Get the current state of the environment."""
+    env = get_or_create_env(session_id)
+    return {
+        "episode_id": env.state.episode_id,
+        "step_count": env.state.step_count,
+    }
+
+
+@app.get("/schema")
+async def get_schemas():
+    """Get the JSON schemas for action and observation models."""
+    return {
+        "action_schema": MyAction.model_json_schema(),
+        "observation_schema": MyObservation.model_json_schema(),
+    }
+
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket, session_id: str = "default"):
+    """WebSocket endpoint for persistent sessions."""
+    await websocket.accept()
+    env = get_or_create_env(session_id)
+
+    try:
+        while True:
+            # Receive message from client
+            data = await websocket.receive_text()
+            message = json.loads(data)
+
+            # Handle different message types
+            if message.get("type") == "reset":
+                task_id = message.get("task_id")
+                obs = env.reset(task_id=task_id)
+                await websocket.send_json({"type": "observation", "data": obs.model_dump()})
+
+            elif message.get("type") == "step":
+                action_data = message.get("action", {})
+                action = MyAction(**action_data)
+                obs = env.step(action)
+                await websocket.send_json({"type": "observation", "data": obs.model_dump()})
+
+            elif message.get("type") == "state":
+                state = {
+                    "episode_id": env.state.episode_id,
+                    "step_count": env.state.step_count,
+                }
+                await websocket.send_json({"type": "state", "data": state})
+
+            elif message.get("type") == "schema":
+                schemas = {
+                    "action_schema": MyAction.model_json_schema(),
+                    "observation_schema": MyObservation.model_json_schema(),
+                }
+                await websocket.send_json({"type": "schema", "data": schemas})
+
+            else:
+                await websocket.send_json({"type": "error", "message": "Unknown message type"})
+
+    except WebSocketDisconnect:
+        # Clean up if needed
+        pass
+    except Exception as e:
+        await websocket.send_json({"type": "error", "message": str(e)})
 
 
 def main(host: str = "0.0.0.0", port: int = 7860):
@@ -70,8 +161,6 @@ def main(host: str = "0.0.0.0", port: int = 7860):
     multiple workers:
         uvicorn my_env.server.app:app --workers 4
     """
-    import uvicorn
-
     uvicorn.run(app, host=host, port=port)
 
 
