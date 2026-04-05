@@ -125,17 +125,6 @@ docker build -t my_env-env:latest -f server/Dockerfile .
 
 Then push the image to Hugging Face or another container registry.
 
-## Recent Project Changes
-
-- Added support for the `IMAGE_NAME` environment variable in `inference.py`.
-- This update enables the inference workflow to accept an optional image name from the environment, while retaining the existing `API_BASE_URL`, `MODEL_NAME`, and `HF_TOKEN` configuration.
-- Implemented all required API endpoints in `server/app.py`:
-  - `POST /reset`: Reset the environment for a new episode
-  - `POST /step`: Execute an action in the environment
-  - `GET /state`: Get current environment state
-  - `GET /schema`: Get action/observation schemas
-  - `WS /ws`: WebSocket endpoint for persistent sessions
-
 ## Local Development
 
 ### Run the FastAPI server
@@ -163,11 +152,34 @@ my_env/
 +-- openenv.yaml
 +-- pyproject.toml
 +-- server/
-�   +-- __init__.py
-�   +-- app.py
-�   +-- my_env_environment.py
+   +-- __init__.py
+   +-- app.py
+   +-- my_env_environment.py
 +-- uv.lock
 ```
+
+## Recent Project Changes
+
+- Added support for the `IMAGE_NAME` environment variable in `inference.py`.
+- This update enables the inference workflow to accept an optional image name from the environment, while retaining the existing `API_BASE_URL`, `MODEL_NAME`, and `HF_TOKEN` configuration.
+- Implemented all required API endpoints in `server/app.py`:
+  - `POST /reset`: Reset the environment for a new episode
+  - `POST /step`: Execute an action in the environment
+  - `GET /state`: Get current environment state
+  - `GET /schema`: Get action/observation schemas
+  - `GET /health`: Health check endpoint for Docker
+  - `WS /ws`: WebSocket endpoint for persistent sessions
+- Fixed Docker configuration to properly set working directory and PYTHONPATH for correct module imports
+- Added curl to Docker image for health check functionality
+
+## Troubleshooting Docker Issues
+
+If the FastAPI application is not running in the container:
+
+1. **Check container logs**: `docker logs <container_name>`
+2. **Verify health endpoint**: The container includes a health check that pings `http://localhost:7860/health`
+3. **Check port mapping**: Ensure port 7860 is properly exposed when running the container
+4. **Import issues**: The Dockerfile now correctly sets `WORKDIR /app/env` and `PYTHONPATH=/app/env` to ensure proper module imports
 
 ## Notes
 

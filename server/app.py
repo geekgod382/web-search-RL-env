@@ -36,8 +36,9 @@ import uvicorn
 
 try:
     from models import MyAction, MyObservation
-    from .csv_env import MyEnvironment
+    from server.csv_env import MyEnvironment
 except ImportError:
+    # Fallback for development/direct execution
     from models import MyAction, MyObservation
     from server.csv_env import MyEnvironment
 
@@ -87,6 +88,11 @@ async def get_environment_state(session_id: str = "default") -> Dict:
     }
 
 
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for Docker health checks."""
+    return {"status": "healthy"}
+
 @app.get("/schema")
 async def get_schemas():
     """Get the JSON schemas for action and observation models."""
@@ -94,7 +100,6 @@ async def get_schemas():
         "action_schema": MyAction.model_json_schema(),
         "observation_schema": MyObservation.model_json_schema(),
     }
-
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket, session_id: str = "default"):
