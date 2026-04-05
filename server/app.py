@@ -37,10 +37,10 @@ except Exception as e:  # pragma: no cover
 
 try:
     from ..models import MyAction, MyObservation
-    from .my_env_environment import MyEnvironment
+    from .csv_env import MyEnvironment
 except ModuleNotFoundError:
     from models import MyAction, MyObservation
-    from server.my_env_environment import MyEnvironment
+    from server.csv_env import MyEnvironment
 
 
 # Create the app with web interface and README integration

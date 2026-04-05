@@ -1,5 +1,5 @@
 ---
-title: My Env CSV RL Environment
+title: CSV RL Environment
 emoji: 🗃️
 colorFrom: blue
 colorTo: cyan
