@@ -5,7 +5,7 @@ colorFrom: blue
 colorTo: green
 sdk: docker
 pinned: false
-app_port: 8000
+app_port: 7860
 base_path: /web
 tags:
   - rl
@@ -85,7 +85,7 @@ docker build -t my_env-env:latest -f server/Dockerfile .
 ### Run locally
 
 ```bash
-docker run --rm -p 8000:8000 my_env-env:latest
+docker run --rm -p 7860:7860 my_env-env:latest
 ```
 
 ### Connect with the client
@@ -93,7 +93,7 @@ docker run --rm -p 8000:8000 my_env-env:latest
 ```python
 from my_env import MyAction, MyEnv
 
-with MyEnv(base_url="http://localhost:8000") as env:
+with MyEnv(base_url="http://localhost:7860") as env:
     obs = env.reset()
     print(obs.task_description)
     action = MyAction(task_id=obs.task_id, operation="select", row_index=1)
@@ -136,7 +136,7 @@ Then push the image to Hugging Face or another container registry.
 
 ```bash
 cd my_env
-uvicorn server.app:app --reload --host 0.0.0.0 --port 8000
+uvicorn server.app:app --reload --host 0.0.0.0 --port 7860
 ```
 
 ### Start via Python module
