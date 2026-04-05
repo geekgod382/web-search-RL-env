@@ -33,6 +33,7 @@ import json
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 import uvicorn
+from openenv.core.env_server.http_server import create_app
 
 try:
     from models import MyAction, MyObservation
@@ -41,6 +42,13 @@ except ImportError:
     # Fallback for development/direct execution
     from models import MyAction, MyObservation
     from server.csv_env import MyEnvironment
+
+base_app = create_app(
+    MyEnvironment,
+    MyAction,
+    MyObservation,
+    env_name="",
+)
 
 
 app = FastAPI(title="CSV RL Environment API", description="OpenEnv-compatible CSV data curation environment")
@@ -54,6 +62,12 @@ def get_or_create_env(session_id: str) -> MyEnvironment:
     if session_id not in environments:
         environments[session_id] = MyEnvironment(seed=42)
     return environments[session_id]
+
+app.mount("/", base_app)
+
+@app.get("/")
+def root():
+    return {"message": "Server running"}
 
 
 @app.post("/reset")
@@ -170,9 +184,9 @@ def main(host: str = "0.0.0.0", port: int = 7860):
 
 
 if __name__ == "__main__":
-    import argparse
+    # import argparse
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--port", type=int, default=7860)
-    args = parser.parse_args()
-    main(port=args.port)
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument("--port", type=int, default=7860)
+    # args = parser.parse_args()
+    main()
