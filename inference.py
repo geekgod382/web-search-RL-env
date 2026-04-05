@@ -26,6 +26,7 @@ from models import MyAction
 API_KEY      = os.getenv("HF_TOKEN")
 API_BASE_URL = os.getenv("API_BASE_URL")
 MODEL_NAME   = os.getenv("MODEL_NAME")
+IMAGE_NAME = os.getenv("IMAGE_NAME")
 
 # ── task config ───────────────────────────────────────────────────────────────
 TASK_NAME  = os.getenv("CSV_TASK")

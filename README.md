@@ -125,6 +125,11 @@ docker build -t my_env-env:latest -f server/Dockerfile .
 
 Then push the image to Hugging Face or another container registry.
 
+## Recent Project Changes
+
+- Added support for the `IMAGE_NAME` environment variable in `inference.py`.
+- This update enables the inference workflow to accept an optional image name from the environment, while retaining the existing `API_BASE_URL`, `MODEL_NAME`, and `HF_TOKEN` configuration.
+
 ## Local Development
 
 ### Run the FastAPI server
