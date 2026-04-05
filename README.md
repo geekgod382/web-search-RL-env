@@ -2,7 +2,7 @@
 title: CSV RL Environment
 emoji: 🗃️
 colorFrom: blue
-colorTo: cyan
+colorTo: green
 sdk: docker
 pinned: false
 app_port: 8000
