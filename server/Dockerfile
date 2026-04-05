@@ -47,6 +47,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
         uv sync --no-install-project --no-editable; \
     fi
 
+# 🔥 ADD THIS
+RUN uv pip install .
+
 RUN --mount=type=cache,target=/root/.cache/uv \
     if [ -f uv.lock ]; then \
         uv sync --frozen --no-editable; \
