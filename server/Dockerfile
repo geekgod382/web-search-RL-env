@@ -73,6 +73,6 @@ ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONPATH="/app/env:$PYTHONPATH"
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://0.0.0.0:7860/health || exit 1
+    CMD curl -f http://127.0.0.1:7860/health || exit 1
 
 CMD ["uvicorn", "server.app:app", "--host", "0.0.0.0", "--port", "7860"]
