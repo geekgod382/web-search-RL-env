@@ -25,6 +25,31 @@ except ImportError:
     from models import MyAction, MyObservation
 
 
+from openenv.core.rubrics.base import Rubric
+
+class EasyTaskRubric(Rubric):
+    def forward(self, action, observation) -> float:
+        return observation.reward or 0.0
+
+class MediumTaskRubric(Rubric):
+    def forward(self, action, observation) -> float:
+        return observation.reward or 0.0
+
+class HardTaskRubric(Rubric):
+    def forward(self, action, observation) -> float:
+        return observation.reward or 0.0
+
+class CsvRubric(Rubric):
+    def __init__(self):
+        super().__init__()
+        self.easy = EasyTaskRubric()    # auto-registered as child!
+        self.medium = MediumTaskRubric()
+        self.hard = HardTaskRubric()
+    
+    def forward(self, action, observation) -> float:
+        return observation.reward or 0.0
+
+
 class TaskOperation(str, Enum):
     SELECT = "select"
     REPAIR = "repair"
@@ -54,6 +79,7 @@ class MyEnvironment(Environment):
         self._task_description = ""
         self._task_goal = ""
         self._done = False
+        self.rubric = CsvRubric()
 
     def reset(self, task_id: Optional[str] = None) -> MyObservation:
         """Start a new episode for the next or requested task."""

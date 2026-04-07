@@ -29,7 +29,7 @@ MODEL_NAME   = os.getenv("MODEL_NAME")
 IMAGE_NAME = os.getenv("IMAGE_NAME")
 
 # ── task config ───────────────────────────────────────────────────────────────
-TASK_NAME  = os.getenv("CSV_TASK")
+TASK_NAMES  = os.getenv("CSV_TASK").split(",")
 BENCHMARK  = os.getenv("CSV_BENCHMARK")
 
 MAX_STEPS             = 8
@@ -239,55 +239,56 @@ def main() -> None:
     score:       float       = 0.0
     success:     bool        = False
 
-    log_start(task=TASK_NAME, env=BENCHMARK, model=MODEL_NAME)
+    for TASK_NAME in TASK_NAMES:
+        log_start(task=TASK_NAME, env=BENCHMARK, model=MODEL_NAME)
 
-    try:
-        obs = env.reset(task_id=TASK_NAME)
+        try:
+            obs = env.reset(task_id=TASK_NAME)
 
-        for step in range(1, MAX_STEPS + 1):
-            if obs.done:
-                break
+            for step in range(1, MAX_STEPS + 1):
+                if obs.done:
+                    break
 
-            # 1. try LLM
-            action_dict   = get_model_action(client, obs)
-            action        = build_action(action_dict)
-            used_fallback = False
+                # 1. try LLM
+                action_dict   = get_model_action(client, obs)
+                action        = build_action(action_dict)
+                used_fallback = False
 
-            # 2. fallback to rule-based policy if LLM failed
-            if action is None:
-                print(f"[DEBUG] step={step} LLM action invalid, using fallback policy", flush=True)
-                action        = get_fallback_action(obs)
-                used_fallback = True
+                # 2. fallback to rule-based policy if LLM failed
+                if action is None:
+                    print(f"[DEBUG] step={step} LLM action invalid, using fallback policy", flush=True)
+                    action        = get_fallback_action(obs)
+                    used_fallback = True
 
-            # 3. if both failed, skip step gracefully
-            if action is None:
-                action_str = str(action_dict)
-                error_msg  = "invalid_action_no_fallback"
-                reward     = 0.0
-                done       = obs.done
-            else:
-                obs        = env.step(action)
-                reward     = obs.reward or 0.0
-                done       = obs.done
-                error_msg  = "fallback_used" if used_fallback else None
-                action_str = str(action.model_dump(exclude_none=True))
+                # 3. if both failed, skip step gracefully
+                if action is None:
+                    action_str = str(action_dict)
+                    error_msg  = "invalid_action_no_fallback"
+                    reward     = 0.0
+                    done       = obs.done
+                else:
+                    obs        = env.step(action)
+                    reward     = obs.reward or 0.0
+                    done       = obs.done
+                    error_msg  = "fallback_used" if used_fallback else None
+                    action_str = str(action.model_dump(exclude_none=True))
 
-            rewards.append(reward)
-            steps_taken = step
+                rewards.append(reward)
+                steps_taken = step
 
-            log_step(step=step, action=action_str, reward=reward, done=done, error=error_msg)
+                log_step(step=step, action=action_str, reward=reward, done=done, error=error_msg)
 
-            if done:
-                break
+                if done:
+                    break
 
-        score   = obs.task_score
-        success = score >= SUCCESS_SCORE_THRESHOLD
+            score   = obs.task_score
+            success = score >= SUCCESS_SCORE_THRESHOLD
 
-    except Exception as exc:
-        print(f"[DEBUG] Unexpected error: {exc}", flush=True)
+        except Exception as exc:
+            print(f"[DEBUG] Unexpected error: {exc}", flush=True)
 
-    finally:
-        log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
+        finally:
+            log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
 
 
 if __name__ == "__main__":
