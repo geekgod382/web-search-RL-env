@@ -322,7 +322,9 @@ class MyEnvironment(Environment):
         return max(0.0, min(1.0, 1.0 - remaining_issues / self._initial_issue_count))
 
     def _compute_task_score(self, progress_fraction: float) -> float:
-        return round(progress_fraction, 3)
+        score = round(progress_fraction, 3)
+        score = max(0.001, min(0.999, score))
+        return score
 
     def _count_medium_category_issues(self) -> int:
         issues = 0
